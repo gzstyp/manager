@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/task  
+       http://www.springframework.org/schema/task/spring-task-4.3.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		http://www.springframework.org/schema/tx 
+       	http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/cache 
+       http://www.springframework.org/schema/cache/spring-cache-4.3.xsd">
+
+	<!-- 这里使用了注解方式实现，所以会扫描指定的路径下的文件:例如：com.fwtai.dao;com.fwtai.service; -->
+	<context:component-scan base-package="com.fwtai.dao" />
+	<context:component-scan base-package="com.fwtai.service" />
+	
+	<!-- 读取数据库配置文件位置 -->
+	<bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations" value="classpath:config/jdbc.properties" />
+	</bean>
+    <!-- 配置druid多数据源主库 -->
+    <bean id="master" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="url" value="${master_url}" />
+        <property name="username" value="${master_user}" />
+        <property name="password" value="${master_password}" />
+        <property name="driverClassName" value="${druid_driver}" />
+        <property name="initialSize" value="2" />
+        <property name="maxActive" value="20" />
+        <property name="minIdle" value="1" />
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />
+        <property name="minEvictableIdleTimeMillis" value="300000" />
+        <property name="testWhileIdle" value="true" />
+        <property name="poolPreparedStatements" value="true" />
+        <property name="maxPoolPreparedStatementPerConnectionSize" value="128" />
+        <property name="filters" value="stat,log4j,wall" />
+    </bean>
+    <!-- 配置druid多数据源从库1 -->
+    <bean id="slave1" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="url" value="${slave1_url}" />
+        <property name="username" value="${slave1_user}" />
+        <property name="password" value="${slave1_password}" />
+        <property name="driverClassName" value="${druid_driver}" />
+        <property name="initialSize" value="2" />
+        <property name="maxActive" value="20" />
+        <property name="minIdle" value="1" />
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />
+        <property name="minEvictableIdleTimeMillis" value="300000" />
+        <property name="testWhileIdle" value="true" />
+        <property name="poolPreparedStatements" value="true" />
+        <property name="maxPoolPreparedStatementPerConnectionSize" value="128" />
+        <property name="filters" value="stat,log4j,wall" />
+    </bean>
+    <!-- 配置druid多数据源从库2 -->
+    <bean id="slave2" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="url" value="${slave2_url}" />
+        <property name="username" value="${slave2_user}" />
+        <property name="password" value="${slave2_password}" />
+        <property name="driverClassName" value="${druid_driver}" />
+        <property name="initialSize" value="2" />
+        <property name="maxActive" value="20" />
+        <property name="minIdle" value="1" />
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />
+        <property name="minEvictableIdleTimeMillis" value="300000" />
+        <property name="testWhileIdle" value="true" />
+        <property name="poolPreparedStatements" value="true" />
+        <property name="maxPoolPreparedStatementPerConnectionSize" value="128" />
+        <property name="filters" value="stat,log4j,wall" />
+    </bean>
+    <!-- 配置druid多数据源从库3 -->
+    <bean id="slave3" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="url" value="${slave3_url}" />
+        <property name="username" value="${slave3_user}" />
+        <property name="password" value="${slave3_password}" />
+        <property name="driverClassName" value="${druid_driver}" />
+        <property name="initialSize" value="2" />
+        <property name="maxActive" value="20" />
+        <property name="minIdle" value="1" />
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />
+        <property name="minEvictableIdleTimeMillis" value="300000" />
+        <property name="testWhileIdle" value="true" />
+        <property name="poolPreparedStatements" value="true" />
+        <property name="maxPoolPreparedStatementPerConnectionSize" value="128" />
+        <property name="filters" value="stat,log4j,wall" />
+    </bean>
+
+    <bean id="dataSource" class="com.fwtai.datasource.DynamicDataSource">
+        <property name="master" ref="master" />
+        <property name="slaves">
+            <list>
+                <ref bean="slave1"/>
+                <ref bean="slave2"/>
+                <ref bean="slave3"/>
+            </list>
+        </property>
+    </bean>
+
+	<bean id="log-filter" class="com.alibaba.druid.filter.logging.Log4jFilter">
+	    <property name="resultSetLogEnabled" value="false" />
+	    <property name="statementExecutableSqlLogEnable" value="true" />
+	    <property name="statementLoggerName" value="sqlLogger" />
+	</bean>
+	
+	<!--异步定义推荐方式  -->
+    <task:executor id="executor" pool-size="32" />
+    <task:scheduler id="scheduler" pool-size="64" />
+    <task:annotation-driven executor="executor" scheduler="scheduler" />
+	
+	<!-- 使用JDBC管理事物 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+		<property name="globalRollbackOnParticipationFailure" value="false" />
+	</bean>
+	
+	<!--
+	    启用annotation注解方式配置事务|配置基于注解的声明式事务
+	    作用：默认使用注解来管理事务的行为
+        有点:
+            1.开发团队达成一致约定,明确标注事务方法的编程风格
+            2.保证事务方法的执行时间尽可能短,不要穿插其他耗时或网络操作RPC|HTTP请求或者剥离到事务方法外部,即抽取出来写个方法
+            3.不是所有的方法都需要添加事务的,如只有一个修改操作;只读操作不需要事务控制
+	-->
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true" />
+	<!-- 启用spring aop注解 -->
+	<aop:aspectj-autoproxy expose-proxy="true" />
+
+	<!-- Mybatis3 工厂类及mybatis优化配置 -->
+	<bean id="sqlMapClient" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocation" value="classpath:config/mybatis-config.xml" />
+		<!-- 配置sqlSessionFactory的参数 -->
+        <property name="configurationProperties">
+            <props>
+            	<!-- 这个配置使全局的映射器启用或禁用缓存 -->
+                <prop key="cacheEnabled">true</prop>   
+                <!-- 查询时，关闭关联对象即时加载以提高性能  -->
+                <prop key="lazyLoadingEnabled">false</prop>
+                 <!-- 设置关联对象加载的形态，此处为按需加载字段(加载字段由SQL指定)，不会加载关联表的所有字段，以提高性能 -->
+                <prop key="aggressiveLazyLoading">true</prop>
+                 <!-- 对于未知的SQL查询，允许返回不同的结果集以达到通用的效果  -->
+                <prop key="multipleResultSetsEnabled">true</prop>
+                 <!-- 允许使用列标签代替列名 -->
+                <prop key="useColumnLabel">true</prop>
+                <!-- 允许使用自定义的主键值(比如由程序生成的UUID 32位编码作为键值)，数据表的PK生成策略将被覆盖 -->
+                <prop key="useGeneratedKeys">true</prop>
+                <!-- 给予被嵌套的resultMap以字段-属性的映射支持     -->
+                <prop key="autoMappingBehavior">FULL</prop>
+                <!-- 对于批量更新操作缓存SQL以提高性能      -->
+                <prop key="defaultExecutorType">BATCH</prop>
+                <!-- 数据库超过25000秒仍未响应则超时     -->
+                <prop key="defaultStatementTimeout">25000</prop>
+            </props>
+        </property>
+        <!--自动扫描sql的映射xml文件-->
+        <property name="mapperLocations" value="classpath:mapper/*/*.xml"/>
+	</bean>
+	
+    <!-- 配置[单库数据库配置]dao层注解name为sqlSessionTemplate,引用上面的'Mybatis3 工厂类及mybatis优化配置'-->
+    <bean id="singleSqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sqlMapClient" />
+    </bean>
+    <!-- 配置[多源数据库配置]dao层注解name为multiSqlSessionTemplate,引用上面一行的的配置'-->
+    <bean id="multiSqlSessionTemplate" class="com.fwtai.datasource.MultiDataSessionTemplate">
+        <constructor-arg index="0" ref="singleSqlSessionTemplate" />
+    </bean>
+
+	<!-- 启用缓存注解功能(请将其配置在Spring主配置文件中) -->
+    <cache:annotation-driven cache-manager="cacheManager"/>
+    <bean id="cacheManagerFactory" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+        <property name="configLocation" value="classpath:config/ehcache.xml"/>
+    </bean>
+    <!-- 创建缓存文件 -->
+     <bean id="cacheManager" class="org.springframework.cache.support.SimpleCacheManager">
+        <property name="caches">
+            <set>
+                <bean class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean">
+                    <property name="name" value="default"/>
+                </bean>
+                <bean class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean">
+                    <property name="name" value="myCache"/>
+                </bean>
+            </set>
+        </property>
+    </bean>
+</beans>

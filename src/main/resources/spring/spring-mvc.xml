@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-4.3.xsd
+	http://www.springframework.org/schema/mvc
+	http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd">
+    
+	<!-- 启用spring的注解驱动  -->
+	<mvc:annotation-driven/>
+	<!-- 这里使用了注解方式实现，所以会扫描指定的路径下的文件 -->
+	<context:component-scan base-package="com.fwtai.controller"/>
+	<!-- jsp视图解析器 -->
+	<bean id="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView" />
+		<property name="prefix" value="/WEB-INF/view/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">  
+        <property name="defaultEncoding" value="utf-8"></property>   
+        <property name="maxUploadSize" value="10485760000"></property>  
+        <property name="maxInMemorySize" value="40960"></property>  
+        <property name="resolveLazily" value="true"/>
+   </bean>
+   
+   <!-- 优雅restful风格处理静态资源,静态资源默认servlet处理,即已在web.xml里增加访问静态资源的配置 -->
+   <mvc:default-servlet-handler />
+   
+   <!-- 拦截器配置 -->
+	<mvc:interceptors>
+	  <!-- 所有拦截 -->
+	  <mvc:interceptor>
+	    <mvc:mapping path="/**/**"/>
+	    <bean class="com.fwtai.config.AuthInterceptor" >
+	      <!-- 以下的配置不被拦截 -->
+	      <property name="allowUrls">
+	        <list>
+	          <!-- 如果请求中包含以下路径，则不进行拦截 -->
+			  	<value>/</value><!-- 跳转到首页jsp页面 -->
+	          	<value>/login</value><!-- 跳转到登录jsp页面 -->
+	          	<value>/user/userLogin</value><!-- 账号和密码登录入口 -->
+	          	<value>/user/logout</value><!-- 退出登录操作 -->
+	          	<value>/timeout</value><!-- 未登录或登录超时的返回页面提示 -->
+	        </list>
+	      </property>
+	    </bean>
+	  </mvc:interceptor>
+	</mvc:interceptors>
+</beans>
